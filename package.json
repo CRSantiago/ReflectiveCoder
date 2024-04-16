@@ -15,12 +15,31 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
-    "commands": [
-      {
-        "command": "reflectivecoder.helloWorld",
-        "title": "Hello World"
+    "configuration": {
+      "title": "ReflectiveCoder Settings",
+      "properties": {
+        "reflectiveCoder.enableNotifications": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable/disable notifications for ReflectiveCoder."
+        },
+        "reflectiveCoder.notificationFrequency": {
+          "type": "number",
+          "default": 1,
+          "description": "Number of saves between notifications. Set to 1 for every save, 2 for every other save, etc."
+        },
+        "reflectiveCoder.customMessage": {
+          "type": "string",
+          "default": "Remember to reflect on your engineering day book!",
+          "description": "Custom message to display in notifications."
+        },
+        "reflectiveCoder.silentHours": {
+          "type": "string",
+          "default": "",
+          "description": "Set silent hours during which notifications will not be shown (e.g., '22:00-07:00')."
+        }
       }
-    ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
@@ -31,14 +50,18 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.88.0",
     "@types/mocha": "^10.0.6",
     "@types/node": "18.x",
+    "@types/node-notifier": "^8.0.5",
+    "@types/vscode": "^1.88.0",
     "@typescript-eslint/eslint-plugin": "^7.4.0",
     "@typescript-eslint/parser": "^7.4.0",
-    "eslint": "^8.57.0",
-    "typescript": "^5.3.3",
     "@vscode/test-cli": "^0.0.8",
-    "@vscode/test-electron": "^2.3.9"
+    "@vscode/test-electron": "^2.3.9",
+    "eslint": "^8.57.0",
+    "typescript": "^5.3.3"
+  },
+  "dependencies": {
+    "node-notifier": "^10.0.1"
   }
 }

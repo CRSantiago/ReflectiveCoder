@@ -1,29 +1,76 @@
-// The module 'vscode' contains the VS Code extensibility API
-// Import the module and reference it with the alias vscode in your code below
-import * as vscode from "vscode"
+import * as vscode from 'vscode'
+import nodeNotifier from 'node-notifier'
 
-// This method is called when your extension is activated
-// Your extension is activated the very first time the command is executed
+let saveCounter = 0
+
+// listen for save events and show a notification
 export function activate(context: vscode.ExtensionContext) {
-  // Use the console to output diagnostic information (console.log) and errors (console.error)
-  // This line of code will only be executed once when your extension is activated
+  // ensure the extension is activated
   console.log(
     'Congratulations, your extension "reflectivecoder" is now active!'
   )
 
-  // The command has been defined in the package.json file
-  // Now provide the implementation of the command with registerCommand
-  // The commandId parameter must match the command field in package.json
   let disposable = vscode.workspace.onDidSaveTextDocument(
     (document: vscode.TextDocument) => {
-      vscode.window.showInformationMessage(
-        "Remember to reflect on your engineering day book!"
-      )
+      // Check if the file is not settings.json
+      if (!document.uri.fsPath.includes('settings.json')) {
+        const config = vscode.workspace.getConfiguration('reflectiveCoder')
+        const enableNotifications = config.get<boolean>('enableNotifications')
+        const notificationFrequency =
+          config.get<number>('notificationFrequency') ?? 1
+        const customMessage = config.get<string>('customMessage') ?? ''
+        const silentHours = config.get<string>('silentHours') ?? ''
+
+        if (enableNotifications && checkSilentHours(silentHours)) {
+          saveCounter++
+          if (saveCounter >= notificationFrequency) {
+            vscode.window.showInformationMessage(customMessage)
+            saveCounter = 0 // Reset counter
+          }
+        }
+      }
     }
   )
 
   context.subscriptions.push(disposable)
 }
 
-// This method is called when your extension is deactivated
-export function deactivate() {}
+// Check if the current time is within the silent hours
+function checkSilentHours(silentHours: string): boolean {
+  if (!silentHours) return true
+
+  const [start, end] = silentHours.split('-')
+  const now = new Date()
+  const startTime = new Date(now)
+  const endTime = new Date(now)
+  const [startHour, startMinute] = start.split(':').map(Number)
+  const [endHour, endMinute] = end.split(':').map(Number)
+
+  startTime.setHours(startHour, startMinute, 0)
+  endTime.setHours(endHour, endMinute, 0)
+
+  return !(now >= startTime && now <= endTime)
+}
+
+// show a notification when the extension is deactivated
+export function deactivate() {
+  const config = vscode.workspace.getConfiguration('reflectiveCoder')
+  const enableNotifications = config.get<boolean>('enableNotifications', true)
+  const customMessage = config.get<string>(
+    'customMessage',
+    'Remember to reflect on your engineering day book!'
+  )
+
+  if (enableNotifications) {
+    nodeNotifier.notify(
+      {
+        title: 'VS Code is Closing',
+        message: customMessage,
+        wait: true,
+      },
+      (err, response, metadata) => {
+        console.log(metadata)
+      }
+    )
+  }
+}
